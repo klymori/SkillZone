@@ -647,3 +647,4 @@ export const getPaginatedCourses = (
     totalPages: Math.ceil(filteredCourses.length / limit),
   }
 }
+export type { Course } from '../api/api'

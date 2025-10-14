@@ -98,7 +98,7 @@ export const LessonView: React.FC = () => {
     setIsVideoCompleted(true)
 
     // Award XP for completing lesson
-    dispatch(addXp(50)) // 50 XP per lesson
+    dispatch(addXp({ amount: 50, reason: "Lesson completed" }))
   }
 
   const navigateToLesson = (direction: 'prev' | 'next') => {

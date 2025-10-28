@@ -1,6 +1,6 @@
 import { db } from '../index'
 import { collection, doc, getDoc, getDocs, query, orderBy, setDoc, addDoc } from 'firebase/firestore'
-import type { Course, Lesson } from '../../api/api'
+import type { Lesson } from '../../api/api'
 
 // Course data structure for Firestore
 export interface FirestoreCourse {

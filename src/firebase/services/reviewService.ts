@@ -9,9 +9,7 @@ import {
   updateDoc,
   setDoc,
   query,
-  orderBy,
-  where,
-  serverTimestamp
+  orderBy
 } from 'firebase/firestore'
 
 // Review data structure for Firestore

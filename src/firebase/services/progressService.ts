@@ -1,5 +1,5 @@
 import { db } from '../index'
-import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
 
 // Progress data structure for Firestore
 export interface UserProgress {

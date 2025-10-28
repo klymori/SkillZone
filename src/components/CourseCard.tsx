@@ -18,7 +18,6 @@ import { cn } from '../utils/cn'
 
 interface CourseCardProps {
   course: Course
-  isFavorite?: boolean
   showProgress?: boolean
   progress?: number
   className?: string
@@ -26,13 +25,11 @@ interface CourseCardProps {
 
 export const CourseCard: React.FC<CourseCardProps> = ({
   course,
-  isFavorite = false,
   showProgress = false,
   progress = 0,
   className,
 }) => {
-  const { user } = useSelector((state: RootState) => state.auth)
-  const [isLoading, setIsLoading] = React.useState(false)
+  useSelector((state: RootState) => state.auth)
 
   const getLevelColor = (level: string) => {
     switch (level) {

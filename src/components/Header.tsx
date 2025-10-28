@@ -3,14 +3,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { Menu, X, Sun, Moon, User, LogOut } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { RootState } from '../app/store'
+import type { RootState, AppDispatch } from '../app/store'
 import { toggleTheme, toggleSidebar, setSidebarOpen } from '../features/ui/uiSlice'
 import { logoutUser } from '../features/auth/authSlice'
 import { Logo } from './Logo'
 import { Button } from './Button'
 
 export const Header: React.FC = () => {
-  const dispatch = useDispatch()
+  const dispatch = useDispatch<AppDispatch>()
   const navigate = useNavigate()
   const { theme, sidebarOpen } = useSelector((state: RootState) => state.ui)
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth)
@@ -48,10 +48,10 @@ export const Header: React.FC = () => {
     return () => {
       document.removeEventListener('keydown', handleEscape)
     }
-  }, [])
+  }, [dispatch])
 
   const handleLogout = async () => {
-    await dispatch(logoutUser() as any)
+    await dispatch(logoutUser())
     navigate('/')
   }
 

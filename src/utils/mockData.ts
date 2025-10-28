@@ -820,8 +820,8 @@ export const getPaginatedCourses = (
   // Apply sorting
   if (filters.sortBy) {
     filteredCourses.sort((a, b) => {
-      let aValue: any
-      let bValue: any
+      let aValue: string | number | Date
+      let bValue: string | number | Date
 
       switch (filters.sortBy) {
         case 'title':
@@ -850,7 +850,15 @@ export const getPaginatedCourses = (
           : aValue.localeCompare(bValue)
       }
 
-      return filters.sortOrder === 'desc' ? bValue - aValue : aValue - bValue
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return filters.sortOrder === 'desc' ? bValue - aValue : aValue - bValue
+      }
+
+      if (aValue instanceof Date && bValue instanceof Date) {
+        return filters.sortOrder === 'desc' ? bValue.getTime() - aValue.getTime() : aValue.getTime() - bValue.getTime()
+      }
+
+      return 0
     })
   }
 

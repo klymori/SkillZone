@@ -12,8 +12,7 @@ import {
   Lock,
   CheckCircle,
   MessageCircle,
-  ThumbsUp,
-  Send
+  ThumbsUp
 } from 'lucide-react'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState } from '../app/store'
@@ -52,8 +51,7 @@ export const CourseDetail: React.FC = () => {
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth)
   const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'reviews'>('overview')
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' })
-  const [replyingTo, setReplyingTo] = useState<string | null>(null)
-  const [replyText, setReplyText] = useState('')
+
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [userLikedReviews, setUserLikedReviews] = useState<Record<string, boolean>>({})
@@ -162,7 +160,7 @@ export const CourseDetail: React.FC = () => {
           type: 'success',
           title: 'Отзыв отправлен',
           message: 'Ваш отзыв успешно добавлен',
-        }) as any)
+        }))
         
         // Force reload reviews after a short delay to ensure Firebase has processed the write
         setTimeout(async () => {
@@ -201,14 +199,14 @@ export const CourseDetail: React.FC = () => {
           type: 'error',
           title: 'Ошибка',
           message: 'Не удалось отправить отзыв. Пожалуйста, попробуйте еще раз.',
-        }) as any)
+        }))
       }
     } else {
       dispatch(addNotification({
         type: 'error',
         title: 'Ошибка',
         message: 'Пожалуйста, напишите отзыв',
-      }) as any)
+      }))
     }
   }
 
@@ -218,7 +216,7 @@ export const CourseDetail: React.FC = () => {
         type: 'error',
         title: 'Ошибка',
         message: 'Пожалуйста, войдите чтобы оценить отзыв',
-      }) as any)
+      }))
       return
     }
     
@@ -243,7 +241,7 @@ export const CourseDetail: React.FC = () => {
         type: 'error',
         title: 'Ошибка',
         message: 'Не удалось оценить отзыв. Пожалуйста, попробуйте еще раз.',
-      }) as any)
+      }))
     }
   }
 

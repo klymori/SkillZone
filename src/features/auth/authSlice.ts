@@ -4,10 +4,10 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
-  updateProfile,
-  type User as FirebaseUser
+  updateProfile
 } from 'firebase/auth'
 import type { User } from '../../api/api'
+import type { AppDispatch } from '../../app/store'
 
 interface AuthState {
   user: User | null
@@ -69,7 +69,7 @@ export const {
 } = authSlice.actions
 
 // Async thunks for Firebase authentication with fallback
-export const loginUser = (email: string, password: string) => async (dispatch: any) => {
+export const loginUser = (email: string, password: string) => async (dispatch: AppDispatch) => {
   try {
     dispatch(loginStart())
     
@@ -90,9 +90,9 @@ export const loginUser = (email: string, password: string) => async (dispatch: a
       
       dispatch(loginSuccess(user))
       return user
-    } catch (firebaseError: any) {
+    } catch (firebaseError) {
       // If Firebase auth fails, fallback to mock authentication
-      console.warn('Firebase auth failed, using mock auth:', firebaseError.message)
+      console.warn('Firebase auth failed, using mock auth:', (firebaseError as Error).message)
       
       // Mock authentication for development
       const user: User = {
@@ -110,14 +110,14 @@ export const loginUser = (email: string, password: string) => async (dispatch: a
       dispatch(loginSuccess(user))
       return user
     }
-  } catch (error: any) {
-    const errorMessage = error.message || 'Failed to login'
+  } catch (error) {
+    const errorMessage = (error as Error).message || 'Failed to login'
     dispatch(loginFailure(errorMessage))
     throw error
   }
 }
 
-export const registerUser = (name: string, email: string, password: string) => async (dispatch: any) => {
+export const registerUser = (name: string, email: string, password: string, role: 'user' | 'admin' = 'user') => async (dispatch: AppDispatch) => {
   try {
     dispatch(loginStart())
     
@@ -134,23 +134,23 @@ export const registerUser = (name: string, email: string, password: string) => a
         id: firebaseUser.uid,
         email: firebaseUser.email || '',
         name: name,
-        role: 'user',
+        role: role,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
       
       dispatch(loginSuccess(user))
       return user
-    } catch (firebaseError: any) {
+    } catch (firebaseError) {
       // If Firebase registration fails, fallback to mock registration
-      console.warn('Firebase registration failed, using mock registration:', firebaseError.message)
+      console.warn('Firebase registration failed, using mock registration:', (firebaseError as Error).message)
       
       // Mock registration for development
       const user: User = {
         id: Date.now().toString(),
         email: email,
         name: name,
-        role: 'user',
+        role: role,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
@@ -161,20 +161,20 @@ export const registerUser = (name: string, email: string, password: string) => a
       dispatch(loginSuccess(user))
       return user
     }
-  } catch (error: any) {
-    const errorMessage = error.message || 'Failed to register'
+  } catch (error) {
+    const errorMessage = (error as Error).message || 'Failed to register'
     dispatch(loginFailure(errorMessage))
     throw error
   }
 }
 
-export const logoutUser = () => async (dispatch: any) => {
+export const logoutUser = () => async (dispatch: AppDispatch) => {
   try {
     await signOut(auth)
     dispatch(logout())
-  } catch (error: any) {
+  } catch (error) {
     // Even if Firebase logout fails, still logout locally
-    console.warn('Firebase logout failed, logging out locally:', error.message)
+    console.warn('Firebase logout failed, logging out locally:', (error as Error).message)
     dispatch(logout())
   }
 }

@@ -6,7 +6,6 @@ import {
   Filter, 
   Grid3X3, 
   List,
-  Heart,
   BookOpen,
   X
 } from 'lucide-react'
@@ -41,8 +40,8 @@ export const Courses: React.FC = () => {
     search: searchParams.get('search') || '',
     category: searchParams.get('category') || '',
     level: searchParams.get('level') || '',
-    sortBy: (searchParams.get('sortBy') as any) || 'title',
-    sortOrder: (searchParams.get('sortOrder') as any) || 'asc',
+    sortBy: (searchParams.get('sortBy') as 'title' | 'rating' | 'studentsCount' | 'createdAt') || 'title',
+    sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc',
     showFavoritesOnly: false,
   })
 
@@ -92,8 +91,8 @@ export const Courses: React.FC = () => {
 
     // Apply sorting
     result.sort((a, b) => {
-      const aValue = a[filters.sortBy]
-      const bValue = b[filters.sortBy]
+      const aValue = a[filters.sortBy] as string | number
+      const bValue = b[filters.sortBy] as string | number
       
       if (typeof aValue === 'string' && typeof bValue === 'string') {
         return filters.sortOrder === 'asc'
@@ -135,7 +134,7 @@ export const Courses: React.FC = () => {
     setSearchParams(params)
   }, [filters, setSearchParams])
 
-  const handleFilterChange = (key: keyof CourseFilters, value: any) => {
+  const handleFilterChange = (key: keyof CourseFilters, value: string | boolean) => {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
 

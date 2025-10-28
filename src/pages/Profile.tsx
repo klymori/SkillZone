@@ -7,11 +7,9 @@ import {
   BookOpen,
   TrendingUp,
   Settings,
-  Save,
   X,
   Moon,
   Sun,
-  Bell,
   Zap,
   Trophy,
   Target,
@@ -20,11 +18,10 @@ import {
 import type { RootState } from '../app/store'
 import { 
   useGetUserProfileQuery, 
-  useUpdateUserProfileMutation,
   useGetUserProgressQuery,
   useGetUserAchievementsQuery
 } from '../api/api'
-import { setLanguage, toggleTheme, addNotification } from '../features/ui/uiSlice'
+import { toggleTheme, addNotification } from '../features/ui/uiSlice'
 import { setUser } from '../features/auth/authSlice'
 import { XpProgressBar } from '../components/XpProgressBar'
 import { AchievementCard } from '../components/AchievementCard'
@@ -32,8 +29,8 @@ import { Button } from '../components/Button'
 import { cn } from '../utils/cn'
 import { uploadAvatar } from '../firebase/services/storageService'
 import { updateUserProfile } from '../firebase/services/userService'
-import { auth } from '../firebase'
 import { useNavigate } from 'react-router-dom'
+import { mockAchievements } from '../utils/mockData'
 
 interface ProfileSettingsProps {
   isOpen: boolean
@@ -43,14 +40,12 @@ interface ProfileSettingsProps {
 const ProfileSettings: React.FC<ProfileSettingsProps> = ({ isOpen, onClose }) => {
   const dispatch = useDispatch()
   const { user } = useSelector((state: RootState) => state.auth)
-  const { theme, language } = useSelector((state: RootState) => state.ui)
-  const [updateProfile] = useUpdateUserProfileMutation()
+  const { theme } = useSelector((state: RootState) => state.ui)
   
   const [formData, setFormData] = React.useState({
     name: user?.name || '',
     email: user?.email || '',
     bio: '',
-    notifications: true,
   })
   
   const [isLoading, setIsLoading] = React.useState(false)
@@ -62,7 +57,6 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ isOpen, onClose }) =>
         name: user.name || '',
         email: user.email || '',
         bio: '',
-        notifications: true,
       })
     }
   }, [isOpen, user])
@@ -93,7 +87,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ isOpen, onClose }) =>
       
       // Close modal after successful save
       onClose()
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to update profile:', error)
       dispatch(addNotification({
         type: 'error',
@@ -605,9 +599,20 @@ export const Profile: React.FC = () => {
                 
                 {userAchievements && userAchievements.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {userAchievements.map((achievement) => (
-                      <AchievementCard key={achievement.id} achievement={achievement} />
-                    ))}
+                    {userAchievements && userAchievements.map((userAchievement) => {
+                      // Find the full achievement data from the achievements list
+                      const achievement = mockAchievements.find((a) => a.id === userAchievement.achievementId);
+                      if (!achievement) return null;
+                      
+                      return (
+                        <AchievementCard 
+                          key={userAchievement.achievementId} 
+                          achievement={achievement} 
+                          userAchievement={userAchievement}
+                          isUnlocked={true}
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-12">

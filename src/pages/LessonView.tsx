@@ -7,10 +7,6 @@ import {
   BookOpen, 
   CheckCircle,
   Play,
-  Pause,
-  RotateCcw,
-  Volume2,
-  Maximize,
   List,
   X,
   FileText
@@ -21,8 +17,8 @@ import { mockCourses } from '../utils/mockData'
 import { Button } from '../components/Button'
 import { QuizComponent } from '../components/Quiz'
 import { addXp } from '../features/progress/gamificationSlice'
-import { updateLessonProgress, getCourseProgress } from '../firebase/services/progressService'
-import { getLessonQuiz, submitQuizResult, mockQuizzes } from '../firebase/services/quizService'
+import { updateLessonProgress, getCourseProgress, type QuizResult } from '../firebase/services/progressService'
+import { submitQuizResult, mockQuizzes, type Quiz } from '../firebase/services/quizService'
 
 interface LessonProgress {
   lessonId: string
@@ -39,11 +35,10 @@ export const LessonView: React.FC = () => {
   
   const [showPlaylist, setShowPlaylist] = useState(false)
   const [lessonProgress, setLessonProgress] = useState<Record<string, LessonProgress>>({})
-  const [currentTime, setCurrentTime] = useState(0)
   const [isVideoCompleted, setIsVideoCompleted] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [quiz, setQuiz] = useState<any>(null)
-  const [quizResult, setQuizResult] = useState<any>(null)
+  const [quiz, setQuiz] = useState<Quiz | null>(null)
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(null)
   const [quizLoading, setQuizLoading] = useState(false)
   const [showQuiz, setShowQuiz] = useState(false)
 
@@ -101,7 +96,7 @@ export const LessonView: React.FC = () => {
           
           // Check if there's a quiz result for this lesson
           if (lessonId && progress.quizResults && progress.quizResults[lessonId]) {
-            setQuizResult(progress.quizResults[lessonId])
+            setQuizResult(progress.quizResults[lessonId] as QuizResult)
           }
         }
         
@@ -109,7 +104,7 @@ export const LessonView: React.FC = () => {
         // In a real app, this would fetch from Firebase
         // For now, we'll use mock data
         if (lessonId && mockQuizzes[lessonId!]) {
-          setQuiz(mockQuizzes[lessonId!])
+          setQuiz(mockQuizzes[lessonId!] as Quiz)
         }
       } catch (error) {
         console.error('Failed to load progress:', error)
@@ -159,7 +154,7 @@ export const LessonView: React.FC = () => {
       
       // Submit quiz result
       const result = await submitQuizResult(user.id, courseId, lessonId, quiz.id, answers, quiz)
-      setQuizResult(result)
+      setQuizResult(result as QuizResult)
       
       // If quiz passed, mark lesson as complete and award XP
       if (result.passed) {

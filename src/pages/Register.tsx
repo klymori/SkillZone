@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { motion } from 'framer-motion'
-import { Mail, Lock, User as UserIcon, AlertCircle } from 'lucide-react'
+import { Mail, Lock, User as UserIcon, AlertCircle, GraduationCap, UserCheck } from 'lucide-react'
 import { registerUser } from '../features/auth/authSlice'
 import { Button } from '../components/Button'
 
@@ -10,6 +10,7 @@ export const Register: React.FC = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' })
+  const [role, setRole] = useState<'user' | 'admin'>('user')
   const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,12 +33,12 @@ export const Register: React.FC = () => {
     }
 
     try {
-      // @ts-ignore
-      await dispatch(registerUser(formData.name, formData.email, formData.password) as any)
+      // @ts-expect-error: registerUser returns a thunk that needs to be dispatched
+      await dispatch(registerUser(formData.name, formData.email, formData.password, role))
       navigate('/profile')
-    } catch (err: any) {
-      console.error('Registration error:', err)
-      setError(err.message || 'Ошибка регистрации. Пожалуйста, попробуйте еще раз.')
+    } catch (error) {
+      console.error('Registration error:', error)
+      setError((error as Error).message || 'Ошибка регистрации. Пожалуйста, попробуйте еще раз.')
     }
   }
 
@@ -131,6 +132,45 @@ export const Register: React.FC = () => {
                   className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
                   placeholder="••••••••"
                 />
+              </div>
+            </div>
+
+            {/* Role Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Выберите роль
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setRole('user')}
+                  className={`p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-2 ${
+                    role === 'user' 
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' 
+                      : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                  }`}
+                >
+                  <GraduationCap className="h-8 w-8" />
+                  <span className="font-medium">Ученик</span>
+                  <span className="text-xs text-center text-gray-500 dark:text-gray-400">
+                    Изучаю курсы и прохожу тесты
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRole('admin')}
+                  className={`p-4 rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-2 ${
+                    role === 'admin' 
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' 
+                      : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                  }`}
+                >
+                  <UserCheck className="h-8 w-8" />
+                  <span className="font-medium">Учитель</span>
+                  <span className="text-xs text-center text-gray-500 dark:text-gray-400">
+                    Создаю курсы и управляю контентом
+                  </span>
+                </button>
               </div>
             </div>
 

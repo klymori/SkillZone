@@ -131,12 +131,11 @@ export const api = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
     baseUrl,
-    prepareHeaders: (headers, { getState }) => {
+    prepareHeaders: (headers) => {
       // Add auth token if available
-      const token = (getState() as any).auth.token
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`)
-      }
+      // Note: Firebase doesn't use JWT tokens in the traditional sense
+      // We're using Firebase Auth which handles authentication differently
+      // For API calls that require authentication, we rely on Firebase Auth state
       return headers
     },
   }),

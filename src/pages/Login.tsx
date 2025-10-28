@@ -22,12 +22,12 @@ export const Login: React.FC = () => {
     }
 
     try {
-      // @ts-ignore
-      await dispatch(loginUser(formData.email, formData.password) as any)
+      // @ts-expect-error: loginUser returns a thunk that needs to be dispatched
+      await dispatch(loginUser(formData.email, formData.password))
       navigate('/profile')
-    } catch (err: any) {
-      console.error('Login error:', err)
-      setError(err.message || 'Ошибка входа. Пожалуйста, попробуйте еще раз.')
+    } catch (error) {
+      console.error('Login error:', error)
+      setError((error as Error).message || 'Ошибка входа. Пожалуйста, попробуйте еще раз.')
     }
   }
 

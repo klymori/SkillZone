@@ -43,6 +43,7 @@ export const Contact: React.FC = () => {
     } catch (error) {
       setStatus('error')
       setErrorMessage('Произошла ошибка. Пожалуйста, попробуйте еще раз.')
+      console.error('Contact form error:', error)
     }
   }
 

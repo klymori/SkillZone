@@ -70,6 +70,14 @@
    VITE_API_URL=http://localhost:3001/api
    VITE_APP_NAME=SkillZone
    VITE_APP_VERSION=1.0.0
+   
+   # Firebase Configuration (see FIREBASE_SETUP.md for details)
+   VITE_FIREBASE_API_KEY=your_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
    ```
 
 4. **Start development server**
@@ -128,6 +136,10 @@ src/
 ├── utils/             # Utility functions
 │   └── cn.ts          # Class name utility
 ├── hooks/             # Custom React hooks
+├── firebase/          # Firebase integration
+│   ├── index.ts       # Firebase initialization
+│   ├── config.ts      # Firebase configuration
+│   └── services/      # Firebase service modules
 └── types/             # TypeScript type definitions
 ```
 
@@ -183,6 +195,7 @@ theme: {
 - `VITE_API_URL` - Backend API URL
 - `VITE_APP_NAME` - Application name
 - `VITE_APP_VERSION` - Application version
+- `VITE_FIREBASE_*` - Firebase configuration variables
 
 ### Build Configuration
 The project uses Vite with custom configuration in `vite.config.ts` including:
@@ -212,6 +225,23 @@ docker build -t skillzone .
 docker run -p 3000:3000 skillzone
 ```
 
+## 🔥 Firebase Integration
+
+This project now includes Firebase integration for:
+- **Authentication:** Email/password and Google Sign-In
+- **Firestore Database:** Storing user data, courses, reviews, and progress
+- **Cloud Storage:** Avatar uploads and media storage
+- **Security Rules:** Fine-grained access control
+
+### Setup Instructions
+Refer to [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for detailed setup instructions.
+
+### Key Features
+- Persistent user sessions across reloads and deployments
+- Real-time data synchronization
+- Secure file uploads with size/extension validation
+- Comprehensive security rules to protect user data
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -235,6 +265,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Framer Motion](https://www.framer.com/motion/) - Animations
 - [Lucide React](https://lucide.dev/) - Icons
 - [i18next](https://www.i18next.com/) - Internationalization
+- [Firebase](https://firebase.google.com/) - Backend services
 
 ## 📞 Contact & Support
 
@@ -245,7 +276,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🚀 Recent Updates
 
-### Version 1.1.0 (Latest)
+### Version 1.2.0 (Firebase Integration)
+- ✅ Firebase Authentication with email/password and Google Sign-In
+- ✅ Firestore integration for user data, courses, reviews, and progress
+- ✅ Cloud Storage for avatar uploads
+- ✅ Persistent user sessions across reloads
+- ✅ Security rules for data protection
+- ✅ Improved error handling and user feedback
+
+### Version 1.1.0
 - ✅ Complete translations for RU/EN/KG across all pages
 - ✅ Enhanced header theme colors (dark/light mode improvements)
 - ✅ Expanded About page with mission, team, achievements
@@ -258,10 +297,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ Mobile responsiveness fixes (iPhone 12 Pro tested)
 
 ### Coming Soon
-- 🔄 Real authentication with email/password and Google OAuth
 - 🔄 Video lessons integration
 - 🔄 Real-time progress synchronization
 - 🔄 Certificate generation
+- 🔄 Firebase Functions for server-side logic
 
 ---
 

@@ -62,7 +62,7 @@ export const Footer: React.FC = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Быстрые ссылки</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white">Быстрые ссылки</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/courses" className="text-gray-300 hover:text-white transition-colors">
@@ -89,7 +89,7 @@ export const Footer: React.FC = () => {
 
           {/* Support */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Поддержка</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white">Поддержка</h3>
             <ul className="space-y-2">
               <li>
                 <a 

@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
 import { 
-  Heart, 
   Clock, 
   Users, 
   Star, 
@@ -34,41 +33,6 @@ export const CourseCard: React.FC<CourseCardProps> = ({
 }) => {
   const { user } = useSelector((state: RootState) => state.auth)
   const [isLoading, setIsLoading] = React.useState(false)
-  const [isInWishlist, setIsInWishlist] = React.useState(false)
-
-  // Check if course is in wishlist
-  React.useEffect(() => {
-    if (user) {
-      const wishlistIds = JSON.parse(localStorage.getItem(`wishlist-${user.id}`) || '[]')
-      setIsInWishlist(wishlistIds.includes(course.id))
-    }
-  }, [user, course.id])
-
-  const handleWishlistToggle = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    
-    if (!user) return
-    
-    setIsLoading(true)
-    try {
-      const wishlistIds = JSON.parse(localStorage.getItem(`wishlist-${user.id}`) || '[]')
-      let updatedWishlist
-      
-      if (isInWishlist) {
-        updatedWishlist = wishlistIds.filter((id: string) => id !== course.id)
-      } else {
-        updatedWishlist = [...wishlistIds, course.id]
-      }
-      
-      localStorage.setItem(`wishlist-${user.id}`, JSON.stringify(updatedWishlist))
-      setIsInWishlist(!isInWishlist)
-    } catch (error) {
-      console.error('Failed to toggle wishlist:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -115,13 +79,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        'group relative bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700',
+        'group relative bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 h-full flex flex-col',
         className
       )}
     >
-      <Link to={`/courses/${course.id}`} className="block">
-        {/* Course thumbnail */}
-        <div className="relative h-48 bg-gradient-to-br from-primary-400 to-primary-600 overflow-hidden">
+      <Link to={`/courses/${course.id}`} className="block flex flex-col h-full" >
+        {/* Course thumbnail - consistent 16:9 aspect ratio */}
+        <div className="relative aspect-video bg-gradient-to-br from-primary-400 to-primary-600 overflow-hidden">
           {course.thumbnail ? (
             <img
               src={course.thumbnail}
@@ -133,30 +97,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
               <BookOpen className="h-16 w-16 text-white opacity-50" />
             </div>
           )}
-          
-          {/* Wishlist button */}
-          {user && (
-            <button
-              onClick={handleWishlistToggle}
-              disabled={isLoading}
-              className={cn(
-                'absolute top-3 right-3 p-2 rounded-full transition-all duration-200',
-                'bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800',
-                'backdrop-blur-sm shadow-sm hover:shadow-md',
-                isLoading && 'opacity-50 cursor-not-allowed'
-              )}
-            >
-              <Heart
-                className={cn(
-                  'h-4 w-4 transition-colors',
-                  isInWishlist
-                    ? 'fill-red-500 text-red-500'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-red-500'
-                )}
-              />
-            </button>
-          )}
-
+            
           {/* Level badge */}
           <div className="absolute top-3 left-3">
             <span
@@ -195,7 +136,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         </div>
 
         {/* Course content */}
-        <div className="p-6">
+        <div className="p-6 flex-grow flex flex-col" >
           {/* Course header */}
           <div className="mb-3">
             <h3 className="font-semibold text-lg text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2">
@@ -249,7 +190,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           )}
 
           {/* Action button */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mt-auto pt-4">
             <div className="text-sm text-gray-500 dark:text-gray-400">
               <Users className="h-4 w-4 inline mr-1" />
               {course.studentsCount.toLocaleString()} студентов

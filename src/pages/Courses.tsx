@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -13,7 +13,8 @@ import {
 import { CourseCard } from '../components/CourseCard'
 import { Button } from '../components/Button'
 import { cn } from '../utils/cn'
-import { mockCourses, mockCategories } from '../utils/mockData'
+import { mockCourses } from '../utils/mockData'
+import type { Course } from '../api/api'
 
 interface CourseFilters {
   search: string
@@ -31,6 +32,10 @@ export const Courses: React.FC = () => {
   const [currentPage, setCurrentPage] = React.useState(1)
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = React.useState(false)
+  const [courses, setCourses] = React.useState<Course[]>([])
+  const [filteredCourses, setFilteredCourses] = React.useState<Course[]>([])
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
   
   const [filters, setFilters] = React.useState<CourseFilters>({
     search: searchParams.get('search') || '',
@@ -41,13 +46,28 @@ export const Courses: React.FC = () => {
     showFavoritesOnly: false,
   })
 
-  // Use mock data instead of API
-  const allCourses = mockCourses
-  const categories = mockCategories
+  // Load courses from mock data (instantly, without artificial delay)
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        setIsLoading(true)
+        // Load mock courses instantly without artificial delay
+        setCourses(mockCourses)
+        setFilteredCourses(mockCourses)
+      } catch (err) {
+        console.error('Failed to load courses:', err)
+        setError('Не удалось загрузить курсы. Пожалуйста, попробуйте позже.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadCourses()
+  }, [])
 
   // Filter courses based on search and filters
-  const filteredCourses = React.useMemo(() => {
-    let result = [...allCourses]
+  useEffect(() => {
+    let result = [...courses]
 
     // Apply search filter
     if (filters.search) {
@@ -88,16 +108,22 @@ export const Courses: React.FC = () => {
       return 0
     })
 
-    return result
-  }, [filters, allCourses])
+    setFilteredCourses(result)
+    setCurrentPage(1) // Reset to first page when filters change
+  }, [filters, courses])
 
-  const courses = filteredCourses
   const totalCourses = filteredCourses.length
   const totalPages = Math.ceil(totalCourses / ITEMS_PER_PAGE)
-  const isLoading = false
+  
+  // Get paginated courses
+  const paginatedCourses = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    return filteredCourses.slice(startIndex, endIndex)
+  }, [filteredCourses, currentPage])
 
   // Update URL params when filters change
-  React.useEffect(() => {
+  useEffect(() => {
     const params = new URLSearchParams()
     
     if (filters.search) params.set('search', filters.search)
@@ -107,7 +133,6 @@ export const Courses: React.FC = () => {
     if (filters.sortOrder !== 'asc') params.set('sortOrder', filters.sortOrder)
     
     setSearchParams(params)
-    setCurrentPage(1) // Reset to first page when filters change
   }, [filters, setSearchParams])
 
   const handleFilterChange = (key: keyof CourseFilters, value: any) => {
@@ -130,7 +155,26 @@ export const Courses: React.FC = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary-200 dark:border-primary-800 border-t-primary-600 dark:border-t-primary-400 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-300">Loading courses...</p>
+          <p className="text-gray-600 dark:text-gray-300">Загрузка курсов...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-xl shadow-lg max-w-md">
+          <BookOpen className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Ошибка загрузки
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            {error}
+          </p>
+          <Button onClick={() => window.location.reload()}>
+            Повторить попытку
+          </Button>
         </div>
       </div>
     )
@@ -231,11 +275,14 @@ export const Courses: React.FC = () => {
                     className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="">Все категории</option>
-                    {categories?.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
+                    <option value="programming">Программирование</option>
+                    <option value="design">Дизайн</option>
+                    <option value="business">Бизнес</option>
+                    <option value="languages">Языки</option>
+                    <option value="history">История</option>
+                    <option value="literature">Литература</option>
+                    <option value="geography">География</option>
+                    <option value="computer_science">Информатика</option>
                   </select>
                 </div>
 
@@ -295,7 +342,7 @@ export const Courses: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   onClick={clearFilters}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <X className="h-4 w-4" />
                   Очистить фильтры
@@ -308,41 +355,28 @@ export const Courses: React.FC = () => {
         {/* Results summary */}
         <div className="mb-6 flex items-center justify-between">
           <p className="text-gray-600 dark:text-gray-300">
-            Showing {courses.length} of {totalCourses} courses
+            Показано {paginatedCourses.length} из {totalCourses} курсов
           </p>
           
           {totalPages > 1 && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Page {currentPage} of {totalPages}
+              Страница {currentPage} из {totalPages}
             </p>
           )}
         </div>
 
         {/* Course grid/list */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-xl p-4 animate-pulse">
-                <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4" />
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded" />
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : courses.length === 0 ? (
+        {paginatedCourses.length === 0 ? (
           <div className="text-center py-12">
             <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              No courses found
+              Курсы не найдены
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Try adjusting your search criteria or filters
+              Попробуйте изменить критерии поиска или фильтры
             </p>
             <Button onClick={clearFilters}>
-              Clear all filters
+              Очистить все фильтры
             </Button>
           </div>
         ) : (
@@ -355,7 +389,7 @@ export const Courses: React.FC = () => {
                 : 'space-y-4'
             )}
           >
-            {courses.map((course, index) => (
+            {paginatedCourses.map((course, index) => (
               <motion.div
                 key={course.id}
                 initial={{ opacity: 0, y: 20 }}

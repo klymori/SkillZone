@@ -1,0 +1,131 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection
+    match /users/{userId} {
+      // Allow users to read their own document
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to create their own document on registration
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to update their own document
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // Deny delete operations on user documents
+      allow delete: if false;
+    }
+    
+    // Courses collection
+    match /courses/{courseId} {
+      // Allow everyone to read courses
+      allow read: if true;
+      
+      // Only admin users can create/update courses
+      allow create, update: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      
+      // Deny delete operations on courses
+      allow delete: if false;
+      
+      // Reviews subcollection
+      match /reviews/{reviewId} {
+        // Allow authenticated users to read reviews
+        allow read: if request.auth != null;
+        
+        // Allow authenticated users to create reviews
+        allow create: if request.auth != null && 
+          request.resource.data.authorId == request.auth.uid;
+        
+        // Allow review authors to update their reviews
+        allow update: if request.auth != null && 
+          resource.data.authorId == request.auth.uid;
+        
+        // Allow review authors to delete their reviews
+        allow delete: if request.auth != null && 
+          resource.data.authorId == request.auth.uid;
+          
+        // Replies subcollection
+        match /replies/{replyId} {
+          // Allow authenticated users to read replies
+          allow read: if request.auth != null;
+          
+          // Allow authenticated users to create replies
+          allow create: if request.auth != null && 
+            request.resource.data.authorId == request.auth.uid;
+            
+          // Allow reply authors to update their replies
+          allow update: if request.auth != null && 
+            resource.data.authorId == request.auth.uid;
+            
+          // Allow reply authors to delete their replies
+          allow delete: if request.auth != null && 
+            resource.data.authorId == request.auth.uid;
+        }
+        
+        // Likes subcollection
+        match /likes/{userId} {
+          // Allow authenticated users to read likes
+          allow read: if request.auth != null;
+          
+          // Allow users to create their own like document
+          allow create: if request.auth != null && 
+            request.resource.data.keys().hasOnly(['createdAt']) &&
+            request.auth.uid == userId;
+            
+          // Allow users to delete their own like document
+          allow delete: if request.auth != null && 
+            request.auth.uid == userId;
+        }
+      }
+    }
+    
+    // User progress collection
+    match /users/{userId}/progress/{courseId} {
+      // Allow users to read their own progress
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to create/update their own progress
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      
+      // Deny delete operations on progress documents
+      allow delete: if false;
+    }
+    
+    // User quizzes collection
+    match /users/{userId}/quizzes/{courseId} {
+      // Allow users to read their own quiz results
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to create/update their own quiz results
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      
+      // Deny delete operations on quiz result documents
+      allow delete: if false;
+    }
+    
+    // User favorites collection
+    match /users/{userId}/favorites/{courseId} {
+      // Allow users to read their own favorites
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to create/update their own favorites
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow users to delete their own favorites
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // User achievements collection
+    match /users/{userId}/achievements/{achievementId} {
+      // Allow users to read their own achievements
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow system to create achievements for users
+      allow create: if request.auth != null;
+      
+      // Deny update/delete operations on achievement documents
+      allow update, delete: if false;
+    }
+  }
+}

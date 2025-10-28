@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { motion } from 'framer-motion'
 import { Mail, Lock, AlertCircle } from 'lucide-react'
-import { loginSuccess } from '../features/auth/authSlice'
+import { loginUser } from '../features/auth/authSlice'
 import { Button } from '../components/Button'
 
 export const Login: React.FC = () => {
@@ -12,7 +12,7 @@ export const Login: React.FC = () => {
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
@@ -21,21 +21,14 @@ export const Login: React.FC = () => {
       return
     }
 
-    // Simple validation - in production, verify against backend
-    dispatch(
-      loginSuccess({
-        user: {
-          id: Date.now().toString(),
-          email: formData.email,
-          name: formData.email.split('@')[0],
-          role: 'user' as const,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        token: 'demo-token-' + Date.now(),
-      })
-    )
-    navigate('/profile')
+    try {
+      // @ts-ignore
+      await dispatch(loginUser(formData.email, formData.password) as any)
+      navigate('/profile')
+    } catch (err: any) {
+      console.error('Login error:', err)
+      setError(err.message || 'Ошибка входа. Пожалуйста, попробуйте еще раз.')
+    }
   }
 
   return (

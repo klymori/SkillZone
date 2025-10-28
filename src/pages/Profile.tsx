@@ -22,15 +22,18 @@ import {
   useGetUserProfileQuery, 
   useUpdateUserProfileMutation,
   useGetUserProgressQuery,
-  useGetUserAchievementsQuery,
-  useGetFavoritesQuery
+  useGetUserAchievementsQuery
 } from '../api/api'
-import { setLanguage, toggleTheme } from '../features/ui/uiSlice'
+import { setLanguage, toggleTheme, addNotification } from '../features/ui/uiSlice'
+import { setUser } from '../features/auth/authSlice'
 import { XpProgressBar } from '../components/XpProgressBar'
 import { AchievementCard } from '../components/AchievementCard'
-import { CourseCard } from '../components/CourseCard'
 import { Button } from '../components/Button'
 import { cn } from '../utils/cn'
+import { uploadAvatar } from '../firebase/services/storageService'
+import { updateUserProfile } from '../firebase/services/userService'
+import { auth } from '../firebase'
+import { useNavigate } from 'react-router-dom'
 
 interface ProfileSettingsProps {
   isOpen: boolean
@@ -52,23 +55,51 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ isOpen, onClose }) =>
   
   const [isLoading, setIsLoading] = React.useState(false)
 
+  // Load user data when modal opens
+  React.useEffect(() => {
+    if (isOpen && user) {
+      setFormData({
+        name: user.name || '',
+        email: user.email || '',
+        bio: '',
+        notifications: true,
+      })
+    }
+  }, [isOpen, user])
+
   const handleSave = async () => {
     if (!user) return
     
     setIsLoading(true)
     try {
-      await updateProfile({
-        userId: user.id,
-        ...formData,
-        preferences: {
-          language,
-          theme,
-          notifications: formData.notifications,
-        },
-      }).unwrap()
+      // Update user profile in Firestore
+      await updateUserProfile(user.id, {
+        displayName: formData.name,
+        bio: formData.bio,
+      })
+      
+      // Update user in Redux store
+      dispatch(setUser({
+        ...user,
+        name: formData.name
+      }))
+      
+      // Show success notification
+      dispatch(addNotification({
+        type: 'success',
+        title: 'Профиль обновлен',
+        message: 'Изменения успешно сохранены',
+      }))
+      
+      // Close modal after successful save
       onClose()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update profile:', error)
+      dispatch(addNotification({
+        type: 'error',
+        title: 'Ошибка',
+        message: 'Не удалось сохранить изменения',
+      }))
     } finally {
       setIsLoading(false)
     }
@@ -158,21 +189,6 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ isOpen, onClose }) =>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Язык
-                    </label>
-                    <select
-                      value={language}
-                      onChange={(e) => dispatch(setLanguage(e.target.value as 'en' | 'ru' | 'ky'))}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    >
-                      <option value="en">English</option>
-                      <option value="ru">Русский</option>
-                      <option value="ky">Кыргызча</option>
-                    </select>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Тема
                     </label>
                     <button
@@ -180,46 +196,43 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ isOpen, onClose }) =>
                       className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600"
                     >
                       <span className="flex items-center gap-2">
-                        {theme === 'dark' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                        {theme === 'dark' ? 'Темная' : 'Светлая'}
+                        {theme === 'light' ? (
+                          <>
+                            <Sun className="h-4 w-4" />
+                            Светлая
+                          </>
+                        ) : (
+                          <>
+                            <Moon className="h-4 w-4" />
+                            Тёмная
+                          </>
+                        )}
                       </span>
+                      <div className="relative w-10 h-5 bg-gray-300 dark:bg-gray-600 rounded-full">
+                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${theme === 'dark' ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                      </div>
                     </button>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      <Bell className="h-4 w-4" />
-                      Уведомления
-                    </label>
-                    <input
-                      type="checkbox"
-                      checked={formData.notifications}
-                      onChange={(e) => setFormData(prev => ({ ...prev, notifications: e.target.checked }))}
-                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <Button
-                  variant="primary"
-                  onClick={handleSave}
-                  loading={isLoading}
-                  className="flex-1"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={onClose}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-              </div>
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="flex-1"
+              >
+                Отмена
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSave}
+                loading={isLoading}
+                className="flex-1"
+              >
+                Сохранить
+              </Button>
             </div>
           </motion.div>
         </motion.div>
@@ -229,47 +242,64 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ isOpen, onClose }) =>
 }
 
 export const Profile: React.FC = () => {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
   const { user } = useSelector((state: RootState) => state.auth)
   const { level, xp, totalXp, streak } = useSelector((state: RootState) => state.gamification)
   const [showSettings, setShowSettings] = React.useState(false)
-  const [activeTab, setActiveTab] = React.useState<'overview' | 'achievements' | 'courses' | 'progress'>('overview')
+  const [activeTab, setActiveTab] = React.useState<'overview' | 'achievements' | 'progress'>('overview')
+  const [avatarUrl, setAvatarUrl] = React.useState<string | null>(null)
 
   // Fetch user data
   const { data: userProfile } = useGetUserProfileQuery(user?.id || '', { skip: !user })
   const { data: userProgress } = useGetUserProgressQuery(user?.id || '', { skip: !user })
   const { data: userAchievements } = useGetUserAchievementsQuery(user?.id || '', { skip: !user })
-  const { data: favoriteCourses } = useGetFavoritesQuery(user?.id || '', { skip: !user })
 
   // Handle avatar upload
-  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file) {
-      // Check file size (limit to 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Размер файла не должен превышать 5МБ')
-        return
-      }
+    if (!file || !user) return
 
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        alert('Пожалуйста, выберите файл изображения')
-        return
-      }
+    // Check file size (limit to 3MB)
+    if (file.size > 3 * 1024 * 1024) {
+      alert('Размер файла не должен превышать 3МБ')
+      return
+    }
 
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const avatarData = e.target?.result as string
-        // Save to localStorage (in production, upload to server)
-        localStorage.setItem(`user-${user?.id}-avatar`, avatarData)
-        // Force re-render by updating a state or triggering a refetch
-        window.location.reload() // Simple approach for demo
-      }
-      reader.readAsDataURL(file)
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      alert('Пожалуйста, выберите файл изображения')
+      return
+    }
+
+    try {
+      // Upload avatar to Firebase Storage
+      const downloadURL = await uploadAvatar(user.id, file)
+      
+      // Update user profile with avatar URL
+      await updateUserProfile(user.id, { avatarUrl: downloadURL })
+      
+      // Update local state
+      setAvatarUrl(downloadURL)
+      
+      // Show success notification
+      dispatch(addNotification({
+        type: 'success',
+        title: 'Аватар обновлен',
+        message: 'Аватар успешно загружен',
+      }))
+      
+      // Do NOT reload the page - keep user logged in
+      // window.location.reload() - removed this line
+    } catch (error) {
+      console.error('Failed to upload avatar:', error)
+      dispatch(addNotification({
+        type: 'error',
+        title: 'Ошибка загрузки',
+        message: 'Не удалось загрузить аватар',
+      }))
     }
   }
-
-  // Get stored avatar
-  const storedAvatar = user ? localStorage.getItem(`user-${user.id}-avatar`) : null
 
   // Calculate stats
   const completedCourses = userProgress?.filter(p => p.progressPercentage === 100).length || 0
@@ -305,9 +335,9 @@ export const Profile: React.FC = () => {
             {/* Avatar */}
             <div className="relative">
               <div className="w-24 h-24 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
-                {storedAvatar || userProfile?.avatar ? (
+                {avatarUrl || userProfile?.avatar ? (
                   <img
-                    src={storedAvatar || userProfile?.avatar}
+                    src={avatarUrl || userProfile?.avatar}
                     alt={user.name}
                     className="w-full h-full rounded-full object-cover"
                   />
@@ -338,12 +368,12 @@ export const Profile: React.FC = () => {
                 </h1>
                 <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-primary-500 to-secondary-500 text-white text-sm font-semibold rounded-full">
                   <Trophy className="h-3 w-3" />
-                  Level {level}
+                  Уровень {level}
                 </div>
               </div>
               
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {userProfile?.bio || 'Learning enthusiast at SkillZone'}
+                {userProfile?.bio || 'Энтузиаст обучения в SkillZone'}
               </p>
               
               {/* XP Progress */}
@@ -405,174 +435,211 @@ export const Profile: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Tab Navigation */}
-        <div className="mb-8">
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="flex space-x-8">
-              {[
-                { id: 'overview', label: 'Обзор', icon: TrendingUp },
-                { id: 'achievements', label: 'Достижения', icon: Award },
-                { id: 'courses', label: 'Мои курсы', icon: BookOpen },
-                { id: 'progress', label: 'Прогресс', icon: Target },
-              ].map((tab) => {
-                const Icon = tab.icon
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
-                    className={cn(
-                      'flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors',
-                      activeTab === tab.id
-                        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                    )}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {tab.label}
-                  </button>
-                )
-              })}
-            </nav>
+        {/* Profile Navigation */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+          <div className="flex flex-wrap">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={cn(
+                'px-6 py-4 font-medium transition-colors border-b-2',
+                activeTab === 'overview'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              )}
+            >
+              Обзор
+            </button>
+            <button
+              onClick={() => setActiveTab('achievements')}
+              className={cn(
+                'px-6 py-4 font-medium transition-colors border-b-2',
+                activeTab === 'achievements'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              )}
+            >
+              Достижения
+            </button>
+            <button
+              onClick={() => setActiveTab('progress')}
+              className={cn(
+                'px-6 py-4 font-medium transition-colors border-b-2',
+                activeTab === 'progress'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              )}
+            >
+              Прогресс
+            </button>
           </div>
         </div>
 
         {/* Tab Content */}
         <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            {activeTab === 'overview' && (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Recent Activity */}
-                <div className="lg:col-span-2">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                    Последняя активность
-                  </h2>
+          {activeTab === 'overview' && (
+            <motion.div
+              key="overview"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              {/* Recent Activity */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  Недавняя активность
+                </h2>
+                
+                {userProgress && userProgress.length > 0 ? (
                   <div className="space-y-4">
-                    {userProgress?.slice(0, 3).map((progress) => (
-                      <div
-                        key={progress.courseId}
-                        className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-medium text-gray-900 dark:text-white">
-                            Прогресс курса
-                          </h3>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
-                            {progress.progressPercentage}% завершено
-                          </span>
+                    {userProgress
+                      .sort((a, b) => new Date(b.lastAccessedAt).getTime() - new Date(a.lastAccessedAt).getTime())
+                      .slice(0, 3)
+                      .map((progress) => (
+                        <div key={progress.courseId} className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                          <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
+                            <BookOpen className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900 dark:text-white">
+                              Прогресс курса
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {progress.progressPercentage}% завершено
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {new Date(progress.lastAccessedAt).toLocaleDateString('ru-RU')}
+                            </p>
+                          </div>
                         </div>
-                        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
-                          <div
-                            className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full"
-                            style={{ width: `${progress.progressPercentage}%` }}
-                          />
-                        </div>
-                      </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      Нет активности
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      Начните обучение, чтобы отслеживать свой прогресс
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Actions */}
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  Быстрые действия
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mb-4">
+                      <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Продолжить обучение
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      Вернитесь к курсам, которые вы начали
+                    </p>
+                    <Button 
+                      variant="primary" 
+                      onClick={() => navigate('/courses')}
+                      className="w-full"
+                    >
+                      Перейти к курсам
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4">
+                      <Target className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Цели на неделю
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      Установите цели для эффективного обучения
+                    </p>
+                    <Button variant="outline" className="w-full">
+                      Установить цели
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mb-4">
+                      <Award className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Получить достижение
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      Выполните задания для получения наград
+                    </p>
+                    <Button variant="outline" className="w-full">
+                      Посмотреть задания
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'achievements' && (
+            <motion.div
+              key="achievements"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  Мои достижения
+                </h2>
+                
+                {userAchievements && userAchievements.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {userAchievements.map((achievement) => (
+                      <AchievementCard key={achievement.id} achievement={achievement} />
                     ))}
                   </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                    Быстрые действия
-                  </h2>
-                  <div className="space-y-3">
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="w-full justify-start"
+                ) : (
+                  <div className="text-center py-12">
+                    <Award className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      Пока нет достижений
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-6">
+                      Продолжайте обучение, чтобы разблокировать достижения
+                    </p>
+                    <Button 
+                      variant="primary" 
+                      onClick={() => navigate('/courses')}
                     >
-                      <BookOpen className="h-4 w-4 mr-2" />
-                      Обзор курсов
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start"
-                    >
-                      <Award className="h-4 w-4 mr-2" />
-                      Посмотреть достижения
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full justify-start"
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Настройки аккаунта
+                      Найти курс
                     </Button>
                   </div>
-                </div>
+                )}
               </div>
-            )}
+            </motion.div>
+          )}
 
-            {activeTab === 'achievements' && (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                    Достижения
-                  </h2>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {userAchievements?.length || 0} достижений открыто
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {userAchievements?.map((userAchievement) => (
-                    <AchievementCard
-                      key={userAchievement.achievementId}
-                      achievement={{
-                        id: userAchievement.achievementId,
-                        name: 'Achievement Name',
-                        description: 'Achievement description',
-                        icon: '🏆',
-                        xpReward: 100,
-                        category: 'completion',
-                        requirements: { type: 'courses_completed', value: 1 }
-                      }}
-                      userAchievement={userAchievement}
-                      isUnlocked={true}
-                      size="md"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'courses' && (
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                    Мои курсы
-                  </h2>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {totalCoursesStarted} курсов в процессе
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {favoriteCourses?.map((course) => (
-                    <CourseCard
-                      key={course.id}
-                      course={course}
-                      isFavorite={true}
-                      showProgress={true}
-                      progress={userProgress?.find(p => p.courseId === course.id)?.progressPercentage || 0}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'progress' && (
-              <div>
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+          {activeTab === 'progress' && (
+            <motion.div
+              key="progress"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
                   Прогресс обучения
                 </h2>
                 
@@ -612,8 +679,8 @@ export const Profile: React.FC = () => {
                   </div>
                 </div>
               </div>
-            )}
-          </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 

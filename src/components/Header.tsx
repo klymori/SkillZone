@@ -5,7 +5,7 @@ import { Menu, X, Sun, Moon, User, LogOut } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { RootState } from '../app/store'
 import { toggleTheme, toggleSidebar, setSidebarOpen } from '../features/ui/uiSlice'
-import { logout } from '../features/auth/authSlice'
+import { logoutUser } from '../features/auth/authSlice'
 import { Logo } from './Logo'
 import { Button } from './Button'
 
@@ -50,8 +50,8 @@ export const Header: React.FC = () => {
     }
   }, [])
 
-  const handleLogout = () => {
-    dispatch(logout())
+  const handleLogout = async () => {
+    await dispatch(logoutUser() as any)
     navigate('/')
   }
 
@@ -94,7 +94,7 @@ export const Header: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={() => dispatch(toggleTheme())}
-              className="p-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+              className="p-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
             >
               {theme === 'light' ? (
                 <Moon className="h-5 w-5" />
@@ -110,7 +110,7 @@ export const Header: React.FC = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                  className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                  className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
                 >
                   <User className="h-5 w-5" />
                   <span className="hidden sm:block">{user?.name}</span>
@@ -153,7 +153,7 @@ export const Header: React.FC = () => {
             ) : (
               <div className="flex items-center space-x-2">
                 <Link to="/login">
-                  <Button variant="ghost" size="sm" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <Button variant="ghost" size="sm" className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
                     Войти
                   </Button>
                 </Link>
@@ -170,7 +170,7 @@ export const Header: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={() => dispatch(toggleSidebar())}
-              className="md:hidden p-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+              className="md:hidden p-2 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
             >
               {sidebarOpen ? (
                 <X className="h-6 w-6" />
@@ -211,7 +211,7 @@ export const Header: React.FC = () => {
                 </Link>
                 <button
                   onClick={() => dispatch(setSidebarOpen(false))}
-                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                   aria-label="Close menu"
                 >
                   <X className="h-6 w-6" />
@@ -244,7 +244,7 @@ export const Header: React.FC = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className="flex items-center px-3 py-3 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 font-medium"
+                      className="flex items-center px-3 py-3 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200 font-medium"
                       onClick={() => dispatch(setSidebarOpen(false))}
                     >
                       {item.name}
@@ -257,7 +257,7 @@ export const Header: React.FC = () => {
                   {/* Theme toggle */}
                   <button
                     onClick={() => dispatch(toggleTheme())}
-                    className="flex items-center w-full px-3 py-3 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                    className="flex items-center w-full px-3 py-3 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
                   >
                     {theme === 'light' ? (
                       <Moon className="h-5 w-5 mr-3" />
@@ -272,7 +272,7 @@ export const Header: React.FC = () => {
                     <div className="space-y-2">
                       <Link
                         to="/profile"
-                        className="flex items-center w-full px-3 py-3 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                        className="flex items-center w-full px-3 py-3 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
                         onClick={() => dispatch(setSidebarOpen(false))}
                       >
                         <User className="h-5 w-5 mr-3" />
@@ -280,7 +280,7 @@ export const Header: React.FC = () => {
                       </Link>
                       <Link
                         to="/dashboard"
-                        className="flex items-center w-full px-3 py-3 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200"
+                        className="flex items-center w-full px-3 py-3 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors duration-200"
                         onClick={() => dispatch(setSidebarOpen(false))}
                       >
                         Панель
@@ -302,7 +302,7 @@ export const Header: React.FC = () => {
                         to="/login"
                         onClick={() => dispatch(setSidebarOpen(false))}
                       >
-                        <Button variant="ghost" size="sm" className="w-full justify-start">
+                        <Button variant="ghost" size="sm" className="w-full justify-start text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
                           Войти
                         </Button>
                       </Link>

@@ -8,7 +8,6 @@ const Home = lazy(() => import('../pages/Home').then(module => ({ default: modul
 const Courses = lazy(() => import('../pages/Courses').then(module => ({ default: module.Courses })))
 const CourseDetail = lazy(() => import('../pages/CourseDetail').then(module => ({ default: module.CourseDetail })))
 const LessonView = lazy(() => import('../pages/LessonView').then(module => ({ default: module.LessonView })))
-const Wishlist = lazy(() => import('../pages/Wishlist').then(module => ({ default: module.Wishlist })))
 const Profile = lazy(() => import('../pages/Profile').then(module => ({ default: module.Profile })))
 const About = lazy(() => import('../pages/About').then(module => ({ default: module.About })))
 const FAQ = lazy(() => import('../pages/FAQ').then(module => ({ default: module.FAQ })))
@@ -64,14 +63,6 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<SuspenseLoader />}>
             <LessonView />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'wishlist',
-        element: (
-          <Suspense fallback={<SuspenseLoader />}>
-            <Wishlist />
           </Suspense>
         ),
       },

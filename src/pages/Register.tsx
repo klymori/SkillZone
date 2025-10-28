@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { motion } from 'framer-motion'
 import { Mail, Lock, User as UserIcon, AlertCircle } from 'lucide-react'
-import { loginSuccess } from '../features/auth/authSlice'
+import { registerUser } from '../features/auth/authSlice'
 import { Button } from '../components/Button'
 
 export const Register: React.FC = () => {
@@ -12,7 +12,7 @@ export const Register: React.FC = () => {
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' })
   const [error, setError] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
@@ -31,21 +31,14 @@ export const Register: React.FC = () => {
       return
     }
 
-    // Register user and auto-login
-    dispatch(
-      loginSuccess({
-        user: {
-          id: Date.now().toString(),
-          email: formData.email,
-          name: formData.name,
-          role: 'user' as const,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        token: 'demo-token-' + Date.now(),
-      })
-    )
-    navigate('/profile')
+    try {
+      // @ts-ignore
+      await dispatch(registerUser(formData.name, formData.email, formData.password) as any)
+      navigate('/profile')
+    } catch (err: any) {
+      console.error('Registration error:', err)
+      setError(err.message || 'Ошибка регистрации. Пожалуйста, попробуйте еще раз.')
+    }
   }
 
   return (

@@ -141,12 +141,15 @@ export const Home: React.FC = () => {
                   </Button>
                 </Link>
                 
-                <Link to="/about" className="flex-1 sm:flex-initial">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto whitespace-nowrap text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
-                    Узнать больше
-                  </Button>
-                </Link>
+                {!isAuthenticated && (
+                  <Link to="/login" className="flex-1 sm:flex-initial">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto whitespace-nowrap text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700">
+                      Уже имеете аккаунт?
+                    </Button>
+                  </Link>
+                )}
               </motion.div>
+
             </motion.div>
 
             {/* Right content - Hero illustration/stats */}
@@ -431,7 +434,7 @@ export const Home: React.FC = () => {
               
               {!isAuthenticated && (
                 <Link to="/login">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto text-gray-900 dark:text-white">
                     Уже имеете аккаунт?
                   </Button>
                 </Link>
